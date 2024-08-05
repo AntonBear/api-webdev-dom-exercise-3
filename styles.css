@@ -62,7 +62,7 @@ body {
 
 .comment-text {
   font-size: 32px;
-  white-space: pre-line; 
+  white-space: pre-line;
 }
 
 .likes {
@@ -135,4 +135,21 @@ body {
 
 .add-form-button:hover {
   opacity: 0.9;
+}
+
+.loading-comments-text {
+  font-size: 30px;
+  font-family: Helvetica;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 30px;
+}
+
+.text-comment-loading {
+  display: none;
+  font-size: 30px;
+  font-family: Helvetica;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 30px;
 }

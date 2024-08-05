@@ -8,7 +8,9 @@
 
   <body>
     <div class="container">
+      <div class="loading-comments-text">Комментарии загружаются...</div>
       <ul id="comments" class="comments"></ul>
+      <p class="text-comment-loading">Комментарий загружается...</p>
       <div class="add-form">
         <input
           id="input"
@@ -32,26 +34,28 @@
 
   <script>
     'use strict'
-    const now = new Date()
-    const day = now.getDate().toString().padStart(2, '0')
-    const month = (now.getMonth() + 1).toString().padStart(2, '0')
-    const year = now.getFullYear().toString().slice(-2)
-    const hours = now.getHours().toString().padStart(2, '0')
-    const minutes = now.getMinutes().toString().padStart(2, '0')
-    const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`
     const listComments = document.getElementById('comments')
     const addFormText = document.querySelector('.add-form-text')
     const addFormButton = document.getElementById('button')
 
     let comments = []
+
     const dataComments = () => {
-      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun/comments', {
+      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun1/comments', {
         method: 'GET',
       }).then((res) => {
-        const jsonPromise = res.json().then((responseData) => {
-          comments = responseData.comments
-          renderComments()
-        })
+        res
+          .json()
+          .then((responseData) => {
+            comments = responseData.comments
+            renderComments()
+          })
+          .then(() => {
+            const loadingCommentsText = document.querySelector(
+              '.loading-comments-text'
+            )
+            loadingCommentsText.style.display = 'none'
+          })
       })
     }
 
@@ -83,36 +87,12 @@
         console.log(counter)
       })
     }
-    // const initLikeButton = () => {
-    //   const likes = document.querySelectorAll('.like-button')
-    //   for (const likeButton of likes) {
-    //     likeButton.addEventListener('click', function (e) {
-    //       const likeindex = likeButton.dataset.index // нахожу значение атрибута лайк-кнопки по индексу массива
-
-    //       const counter = document.querySelector(
-    //         `[data-counter-index="${likeindex}"]` //   нахожу счетчик с помощью дата атрибута по общему индексу
-    //       )
-    //       const likeButtonEl = document.querySelector(
-    //         `[data-index="${likeindex}"]`
-    //       ) //   нахожу кнопку лайков с помощью дата атрибута по общему индексу
-
-    //       const fixCount = comments[likeindex] // нужный объект по значению индекса дата-атрибута
-
-    //       fixCount.isliked = fixCount.isliked ? false : true // меняю значения свойства isLike
-    //       e.stopPropagation()
-    //       renderComments()
-    //     })
-    //   }
-    // }
 
     const renderComments = () => {
-      console.log(comments)
       const commentsHTML = comments
-        .map((comment, index) => {
+        .map((comment) => {
           const inputDate = comment.date
-          // 1. Преобразуем строку в объект Date, игнорируя часовой пояс:
           const date = new Date(inputDate.substring(0, 19))
-          // 2. Форматируем дату в нужный формат:
           const formattedDate = `${date
             .getDate()
             .toString()
@@ -166,23 +146,45 @@
         alert('Введите пожалуйста хоть что-нибудь')
         return
       }
-      console.log(inputValue)
-      console.log(text)
+      const newParagraph = document.querySelector('.text-comment-loading')
+      document.querySelector('.add-form').style.display = 'none'
+      newParagraph.style.display = 'flex'
 
-      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun/comments', {
+      document
+        .querySelector('.add-form')
+        .parentNode.insertBefore(
+          newParagraph,
+          document.querySelector('.add-form')
+        )
+
+      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun1/comments', {
         method: 'POST',
         body: JSON.stringify({ text: text, name: inputValue }),
-      }).then((res) => {
-        res.json().then((responseData) => {
-          console.log(responseData)
-          console.log(comments)
-        })
       })
-      dataComments()
-      renderComments()
+        .then((res) => {
+          return res.json()
+        })
+        .then((resData) => {
+          return fetch(
+            'https://wedev-api.sky.pro/api/v1/dmiriy-braun1/comments',
+            {
+              method: 'GET',
+            }
+          )
+        })
+        .then((res) => {
+          return res.json()
+        })
+        .then((res) => {
+          comments = res.comments
+          renderComments()
+        })
+        .then((data) => {
+          document.querySelector('.add-form').style.display = 'flex'
+          document.querySelector('.text-comment-loading').style.display = 'none'
+        })
     })
 
     dataComments()
-    renderComments()
   </script>
 </html>
