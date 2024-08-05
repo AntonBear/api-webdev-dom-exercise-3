@@ -10,8 +10,10 @@
     <div class="container">
       <div class="loading-comments-text">Комментарии загружаются...</div>
       <ul id="comments" class="comments"></ul>
-      <p class="text-comment-loading">Комментарий загружается...</p>
+      <img src="./13.gif" id="loader" style="display: none" />
+
       <div class="add-form">
+        <p class="text-comment-loading">Комментарий загружается...</p>
         <input
           id="input"
           type="text"
@@ -22,7 +24,9 @@
           id="textarea"
           type="textarea"
           class="add-form-text"
-          placeholder="Введите ваш коментарий"
+          placeholder="Введите ваш коментарий 
+
+likes dont save in API"
           rows="4"
         ></textarea>
         <div class="add-form-row">
@@ -37,11 +41,17 @@
     const listComments = document.getElementById('comments')
     const addFormText = document.querySelector('.add-form-text')
     const addFormButton = document.getElementById('button')
+    const inputName = document.getElementById('input')
+    const addForm = document.querySelector('.add-form')
+    const loader = document.getElementById('loader')
+    const BASE_URL = 'https://wedev-api.sky.pro/api/v1/dmiriy-braun4/comments'
 
     let comments = []
+    addFormButton.disabled = true
 
     const dataComments = () => {
-      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun1/comments', {
+      showLoader()
+      fetch(BASE_URL, {
         method: 'GET',
       }).then((res) => {
         res
@@ -56,36 +66,68 @@
             )
             loadingCommentsText.style.display = 'none'
           })
+          .finally(() => {
+            hideLoader()
+          })
       })
     }
 
+    addForm.addEventListener('input', function checkInputsLength(event) {
+      if (event.target.classList.contains('add-form-name')) {
+        if (event.target.value.length > 3 && addFormText.value.length > 3) {
+          addFormButton.disabled = false
+
+          console.log(event.target.value.length)
+          console.log(addFormText.value.length)
+        } else {
+          addFormButton.disabled = true
+        }
+      }
+    })
+    addForm.addEventListener('input', function checkInputsLength(event) {
+      if (event.target.classList.contains('add-form-text')) {
+        if (event.target.value.length > 3 && inputName.value.length > 3) {
+          addFormButton.disabled = false
+        } else {
+          addFormButton.disabled = true
+        }
+      }
+    })
     listComments.addEventListener('click', function (event) {
-      let target = event.target
-      if (!target.classList.contains('comment-text')) {
+      if (!event.target.classList.contains('comment-text')) {
         return
       }
       const currentHeader = document.querySelector(
         `[data-comment-header-index='${event.target.dataset.index}']`
-      ) // нахожу определенный заголовок по дата атрибуту
-      addFormText.value = `>${target.textContent.replace(/\s/g, ' ').trim()}\n${
-        currentHeader.textContent
-      }`
+      )
+      addFormText.value = `>${event.target.textContent
+        .replace(/\s/g, ' ')
+        .trim()}\n${currentHeader.textContent}`
+    })
+    listComments.addEventListener('click', function (event) {
+      if (event.target.classList.contains('like-button')) {
+        if (event.target.classList.contains('-active-like')) {
+          const counter = document.querySelector(
+            `[data-counter-index="${event.target.dataset.index}"]`
+          )
+          event.target.classList.toggle('-active-like')
+          counter.innerHTML = 0
+        } else {
+          event.target.classList.toggle('-active-like')
+          const counter = document.querySelector(
+            `[data-counter-index="${event.target.dataset.index}"]`
+          )
+          counter.innerHTML = 1
+        }
+      }
     })
 
-    const likeButton = () => {
-      listComments.addEventListener('click', function (event) {
-        let target = event.target
+    function showLoader() {
+      loader.style.display = 'block'
+    }
 
-        if (!target.classList.contains('like-button')) {
-          return
-        }
-        console.log(target)
-
-        const counter = document.querySelector(
-          `[data-counter-index="${event.target.dataset.index}"]` //   нахожу счетчик с помощью дата атрибута по общему индексу
-        )
-        console.log(counter)
-      })
+    function hideLoader() {
+      loader.style.display = 'none'
     }
 
     const renderComments = () => {
@@ -119,7 +161,7 @@
                 <div class="likes">
                   <span class="likes-counter" data-counter-index="${
                     comment.id
-                  }">${comment.likes} </span>
+                  }">${comment.likes}</span>
 
                   <button class='${
                     comment.isliked ? 'like-button -active-like' : 'like-button'
@@ -134,7 +176,7 @@
     }
 
     addFormButton.addEventListener('click', function () {
-      const inputValue = document
+      const name = document
         .getElementById('input')
         .value.replaceAll('<', '&lt')
         .replaceAll('>', '&gt')
@@ -146,31 +188,28 @@
         alert('Введите пожалуйста хоть что-нибудь')
         return
       }
-      const newParagraph = document.querySelector('.text-comment-loading')
+      const textCommentLoading = document.querySelector('.text-comment-loading')
       document.querySelector('.add-form').style.display = 'none'
-      newParagraph.style.display = 'flex'
+      textCommentLoading.style.display = 'flex'
 
       document
         .querySelector('.add-form')
         .parentNode.insertBefore(
-          newParagraph,
+          textCommentLoading,
           document.querySelector('.add-form')
         )
-
-      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun1/comments', {
+      showLoader()
+      fetch(BASE_URL, {
         method: 'POST',
-        body: JSON.stringify({ text: text, name: inputValue }),
+        body: JSON.stringify({ text: text, name: name }),
       })
         .then((res) => {
           return res.json()
         })
         .then((resData) => {
-          return fetch(
-            'https://wedev-api.sky.pro/api/v1/dmiriy-braun1/comments',
-            {
-              method: 'GET',
-            }
-          )
+          return fetch(BASE_URL, {
+            method: 'GET',
+          })
         })
         .then((res) => {
           return res.json()
@@ -182,6 +221,11 @@
         .then((data) => {
           document.querySelector('.add-form').style.display = 'flex'
           document.querySelector('.text-comment-loading').style.display = 'none'
+          addFormText.value = ''
+          inputName.value = ''
+        })
+        .finally(() => {
+          hideLoader()
         })
     })
 

@@ -153,3 +153,9 @@ body {
   border: none;
   margin-bottom: 30px;
 }
+
+#loader {
+  display: block; 
+  z-index: 9999; 
+  margin-top: 20px;
+}
