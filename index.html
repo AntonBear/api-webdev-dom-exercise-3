@@ -41,102 +41,109 @@
     const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`
     const listComments = document.getElementById('comments')
     const addFormText = document.querySelector('.add-form-text')
+    const addFormButton = document.getElementById('button')
 
-    const comments = [
-      {
-        inputValue: 'Anton',
-        inputAddFormName: 'FirstCom',
-        date: formattedDate,
-        isliked: true,
-      },
-      {
-        inputValue: 'Dima',
-        inputAddFormName: 'hello',
-        date: formattedDate,
-        isliked: true,
-      },
-      {
-        inputValue: 'Dima',
-        inputAddFormName: 'hello',
-        date: formattedDate,
-        isliked: true,
-      },
-    ]
-
-    const initLikeButton = () => {
-      const likes = document.querySelectorAll('.like-button')
-      for (const likeButton of likes) {
-        likeButton.addEventListener('click', function (e) {
-          const likeindex = likeButton.dataset.index // нахожу значение атрибута лайк-кнопки по индексу массива
-
-          const counter = document.querySelector(
-            `[data-counter-index="${likeindex}"]` //   нахожу счетчик с помощью дата атрибута по общему индексу
-          )
-          const likeButtonEl = document.querySelector(
-            `[data-index="${likeindex}"]`
-          ) //   нахожу кнопку лайков с помощью дата атрибута по общему индексу
-
-          const fixCount = comments[likeindex] // нужный объект по значению индекса дата-атрибута
-
-          fixCount.isliked = fixCount.isliked ? false : true // меняю значения свойства isLike
-          e.stopPropagation()
+    let comments = []
+    const dataComments = () => {
+      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun/comments', {
+        method: 'GET',
+      }).then((res) => {
+        const jsonPromise = res.json().then((responseData) => {
+          comments = responseData.comments
           renderComments()
         })
-      }
+      })
     }
 
-    const initText = () => {
-      const texts = document.querySelectorAll('.comment-text')
-      for (const text of texts) {
-        text.addEventListener('click', function (e) {
-          const currentText = document.querySelector(
-            `[data-index='${text.dataset.index}']`
-          ) // нахожу определенный коммент по дата атрибуту
-
-          const currentHeader = document.querySelector(
-            `[data-comment-header-index='${text.dataset.index}']`
-          ) // нахожу определенный заголовок по дата атрибуту
-
-          const valueText = currentText.textContent.replace(/\s/g, '') // значение текста в комментарии
-          const valueHeader = currentHeader.textContent // значение заголовка в комментарии
-
-          addFormText.appendChild(document.createTextNode(valueText))
-          addFormText.appendChild(document.createElement('br'))
-          addFormText.appendChild(document.createTextNode(valueHeader))
-
-          addFormText.value = `>${valueText}
-${valueHeader}`
-
-          // renderComments()
-          e.stopPropagation()
-        })
+    listComments.addEventListener('click', function (event) {
+      let target = event.target
+      if (!target.classList.contains('comment-text')) {
+        return
       }
+      const currentHeader = document.querySelector(
+        `[data-comment-header-index='${event.target.dataset.index}']`
+      ) // нахожу определенный заголовок по дата атрибуту
+      addFormText.value = `>${target.textContent.replace(/\s/g, ' ').trim()}\n${
+        currentHeader.textContent
+      }`
+    })
+
+    const likeButton = () => {
+      listComments.addEventListener('click', function (event) {
+        let target = event.target
+
+        if (!target.classList.contains('like-button')) {
+          return
+        }
+        console.log(target)
+
+        const counter = document.querySelector(
+          `[data-counter-index="${event.target.dataset.index}"]` //   нахожу счетчик с помощью дата атрибута по общему индексу
+        )
+        console.log(counter)
+      })
     }
+    // const initLikeButton = () => {
+    //   const likes = document.querySelectorAll('.like-button')
+    //   for (const likeButton of likes) {
+    //     likeButton.addEventListener('click', function (e) {
+    //       const likeindex = likeButton.dataset.index // нахожу значение атрибута лайк-кнопки по индексу массива
+
+    //       const counter = document.querySelector(
+    //         `[data-counter-index="${likeindex}"]` //   нахожу счетчик с помощью дата атрибута по общему индексу
+    //       )
+    //       const likeButtonEl = document.querySelector(
+    //         `[data-index="${likeindex}"]`
+    //       ) //   нахожу кнопку лайков с помощью дата атрибута по общему индексу
+
+    //       const fixCount = comments[likeindex] // нужный объект по значению индекса дата-атрибута
+
+    //       fixCount.isliked = fixCount.isliked ? false : true // меняю значения свойства isLike
+    //       e.stopPropagation()
+    //       renderComments()
+    //     })
+    //   }
+    // }
 
     const renderComments = () => {
+      console.log(comments)
       const commentsHTML = comments
         .map((comment, index) => {
-          return `<li class="comment" data-idex="${index}">
+          const inputDate = comment.date
+          // 1. Преобразуем строку в объект Date, игнорируя часовой пояс:
+          const date = new Date(inputDate.substring(0, 19))
+          // 2. Форматируем дату в нужный формат:
+          const formattedDate = `${date
+            .getDate()
+            .toString()
+            .padStart(2, '0')}.${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, '0')}.${date.getFullYear()} ${date
+            .getHours()
+            .toString()
+            .padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+
+          return `<li class="comment" data-idex="${comment.id}">
               <div class="comment-header">
-                <div data-comment-header-index='${index}'>${
-            comment.inputValue
+                <div data-comment-header-index='${comment.id}'>${
+            comment.author.name
           }</div>
-                <div>${comment.date}</div>
+                <div>${formattedDate}</div>
               </div>
               <div class="comment-body">
-                <div class="comment-text" data-index="${index}" >
-                  ${comment.inputAddFormName}
+                <div class="comment-text" data-index="${comment.id}" >
+                  ${comment.text}
                 </div>
               </div>
               <div class="comment-footer">
                 <div class="likes">
-                  <span class="likes-counter" data-counter-index="${index}">${
-            comment.isliked ? '1' : '0'
-          } </span>
+                  <span class="likes-counter" data-counter-index="${
+                    comment.id
+                  }">${comment.likes} </span>
 
                   <button class='${
                     comment.isliked ? 'like-button -active-like' : 'like-button'
-                  }' data-index="${index}"></button>
+                  }' data-index="${comment.id}"></button>
 
                 </div>
               </div>
@@ -144,35 +151,38 @@ ${valueHeader}`
         })
         .join('')
       listComments.innerHTML = commentsHTML
-
-      initLikeButton()
-      initText()
     }
 
-    const addFormButton = document.getElementById('button')
     addFormButton.addEventListener('click', function () {
       const inputValue = document
         .getElementById('input')
         .value.replaceAll('<', '&lt')
         .replaceAll('>', '&gt')
-      const inputAddFormName = document
+      const text = document
         .getElementById('textarea')
         .value.replaceAll('<', '&lt')
         .replaceAll('>', '&gt')
-      if (inputValue === '' || inputAddFormName === '') {
+      if (text === '') {
         alert('Введите пожалуйста хоть что-нибудь')
         return
       }
+      console.log(inputValue)
+      console.log(text)
 
-      comments.push({
-        inputValue: inputValue,
-        inputAddFormName: inputAddFormName,
-        date: formattedDate,
-        isliked: false,
+      fetch('https://wedev-api.sky.pro/api/v1/dmiriy-braun/comments', {
+        method: 'POST',
+        body: JSON.stringify({ text: text, name: inputValue }),
+      }).then((res) => {
+        res.json().then((responseData) => {
+          console.log(responseData)
+          console.log(comments)
+        })
       })
+      dataComments()
       renderComments()
     })
 
-    renderComments() // начало
+    dataComments()
+    renderComments()
   </script>
 </html>
