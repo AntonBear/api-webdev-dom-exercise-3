@@ -44,10 +44,10 @@ likes dont save in API"
     const inputName = document.getElementById('input')
     const addForm = document.querySelector('.add-form')
     const loader = document.getElementById('loader')
-    const BASE_URL = 'https://wedev-api.sky.pro/api/v1/dmiriy-braun4/comments'
+    const BASE_URL = 'https://wedev-api.sky.pro/api/v1/dmiriy-braun5/comments'
+    addFormButton.disabled = true
 
     let comments = []
-    addFormButton.disabled = true
 
     const dataComments = () => {
       showLoader()
@@ -60,13 +60,14 @@ likes dont save in API"
             comments = responseData.comments
             renderComments()
           })
-          .then(() => {
+          .catch((error) => {
+            if (error.status == '500') alert('Ошибка подключения к сети')
+          })
+          .finally(() => {
             const loadingCommentsText = document.querySelector(
               '.loading-comments-text'
             )
             loadingCommentsText.style.display = 'none'
-          })
-          .finally(() => {
             hideLoader()
           })
       })
@@ -176,6 +177,9 @@ likes dont save in API"
     }
 
     addFormButton.addEventListener('click', function () {
+
+
+      
       const name = document
         .getElementById('input')
         .value.replaceAll('<', '&lt')
@@ -201,9 +205,15 @@ likes dont save in API"
       showLoader()
       fetch(BASE_URL, {
         method: 'POST',
-        body: JSON.stringify({ text: text, name: name }),
+        body: JSON.stringify({ text: text, name: name, forceError: true }),
       })
         .then((res) => {
+          if (res.status === 500) {
+            throw new Error('Сервер сломался')
+          }
+          if (res.status === 400) {
+            throw new Error('Плохой запрос')
+          }
           return res.json()
         })
         .then((resData) => {
@@ -223,6 +233,22 @@ likes dont save in API"
           document.querySelector('.text-comment-loading').style.display = 'none'
           addFormText.value = ''
           inputName.value = ''
+        })
+        .catch((error) => {
+          console.log(error.message)
+          if (error.message == 'Сервер сломался') {
+            alert(
+              'Сервер сломался (плановое поведение для отработки .catch) попробуйте отправить еще раз'
+            )
+          }
+          if (error.message == 'Failed to fetch') {
+            alert('У вас отсутствует интернет соединение')
+          }
+
+          document.querySelector('.text-comment-loading').style.display = 'none'
+          document.querySelector('.add-form').style.display = 'flex'
+          // TODO: отправлять в систему сбора ошибок
+          // console.warn(error)
         })
         .finally(() => {
           hideLoader()
